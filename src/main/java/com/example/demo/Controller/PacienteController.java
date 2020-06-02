@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +29,8 @@ public class PacienteController {
 	public ResponseEntity<Paciente> addPaciente(@RequestBody Paciente paciente) {
 		return new ResponseEntity<Paciente>(pacienteService.addPaciente(paciente), HttpStatus.CREATED);
 	}
-
+	
+	@CrossOrigin
 	@GetMapping("/pacientes")
 	public ResponseEntity<List<Paciente>> getPacientes() {
 		return new ResponseEntity<List<Paciente>>(pacienteService.getPacientes(), HttpStatus.OK);
