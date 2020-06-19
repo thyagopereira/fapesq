@@ -12,6 +12,7 @@ enum TipoTeste{
 	RT_PCR,TESTE_RAPIDO_ANTICORPO, TESTE_RAPIDO_ANTIGENO, NAO_CLASSIFICADO;
 }
 public class Record {
+	private int id;
 	private String numeroNotificacao; //coluna 0
 	private boolean profissionalAreaSaude; //coluna 1
 	private TipoTeste tipoTeste; //coluna 5
@@ -44,6 +45,17 @@ public class Record {
 	public Record() {
 		super();
 	}
+
+		
+	public int getId() {
+		return id;
+	}
+
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
 
 	public String getNumeroNotificacao() {
 		return numeroNotificacao;

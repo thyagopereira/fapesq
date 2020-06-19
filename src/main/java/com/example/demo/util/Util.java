@@ -7,6 +7,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import org.apache.poi.EncryptedDocumentException;
@@ -19,6 +20,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 public class Util {
+	public static final String FOLDER_DADOS_NAME = "dados";
 	public static final Pattern PATTERN_DATA = Pattern.compile("[0-9]{2}/[0-9]{2}/[0-9]{2}");
 	public static final String TOKEN_NUMERO_NOTIFICACAO = "Número da Notificação";
 	public static final String TOKEN_EH_PROFISSIONAL_SAUDE = "É profissional de saúde?";
@@ -49,6 +51,7 @@ public class Util {
 	public static final String TOKEN_MUNICIPIO = "Municí­pio de Residência";
 	public static final String TOKEN_DATA_INICIO_SINTOMAS = "Data do iní­cio dos sintomas";
 	
+	
 	public static String cleanString(String string) {
 		string = string.replaceAll("Ãº", "ú");
 		string = string.replaceAll("Ã§", "ç");
@@ -59,6 +62,8 @@ public class Util {
 		string = string.replaceAll("Ã´", "ô");
 		string = string.replaceAll("Ã¡", "á");
 		string = string.replaceAll("Ã", "í");
+		string = string.replaceAll("í©", "é");
+		
 		
 		return string;
 	}
@@ -193,7 +198,7 @@ public class Util {
 		try {
 			wb = WorkbookFactory.create(file);
 			int numberOfSheets = wb.getNumberOfSheets();
-			System.out.println("Loading file: " + file.getName());
+			System.out.println("Loading file: " + file.getAbsolutePath());
 			System.out.println("Number of sheets: " + numberOfSheets);
 			System.out.println("Assuming data in sheet 0 (first sheet)");
 			System.out.println("Building data to be returned");
@@ -215,9 +220,12 @@ public class Util {
 			
 			
 			LinkedList<Record> records = new LinkedList<Record>();
+			int id = 1;
 			for (int i = 1; i <= lastRowNum; i++) {
 				 Row currentRow = sheet.getRow(i);
 				 Record record = new Record();
+				 
+				 record.setId(id++);
 				 int currentColumnIndex = 0;
 				 //buscar nas colunas carregadas se tem cada coluna pelo nome (TOKEN) e pega o index dela
 				 
@@ -319,6 +327,7 @@ public class Util {
 					 currentColumnIndex = column.getIndex();
 					 currentCell = currentRow.getCell(currentColumnIndex); //16
 					 CEP = getCellContentAsString(currentCell);
+					 //System.out.println("CEP: " + CEP);
 				 }
 				 record.setCEP(CEP);
 				 
@@ -326,6 +335,7 @@ public class Util {
 				 boolean resultadoTeste = false;
 				 if(column != null) {
 					 currentColumnIndex = column.getIndex();
+					 
 					 currentCell = currentRow.getCell(currentColumnIndex); //18
 					 resultadoTeste = getCellContentAsBoolean(currentCell);
 				 }
@@ -503,15 +513,23 @@ public class Util {
 		//os arquivos devem ser subidos para uma pasta especifica via servico 
 		//pela data do arquivo mais recente (ou pelo nome) creio qu eseja possivel saber 
 		//qual arquivo seria o mais recente.
+		File folder = new File(FOLDER_DADOS_NAME);
 		return new File("/Users/adalbertocajueiro/Downloads/Base 16_06 UFCG.xlsx");
 	}
 	public static void main(String[] args) throws EncryptedDocumentException, IOException {
-		File file = new File("/Users/adalbertocajueiro/Downloads/Base 16_06 UFCG.xlsx");
+		File folder = new File(FOLDER_DADOS_NAME);
+		File file = new File(folder,"Base 16_06 UFCG.xlsx");
 		//System.out.println("Sim".equalsIgnoreCase("sim"));
 		//System.out.println(cleanString("NÃ£o").equalsIgnoreCase("não"));
 		DataInfo dados = loadDataFromExcel(file);
 		//dados.getLoadedColumns().forEach(d -> System.out.println(d.getName()));
-		long filtrados = dados.getRecords().stream().filter(r -> r.getEstadoResidencia().equalsIgnoreCase("Paraí­ba")).count();
-		System.out.println("Registros filtrados: " + filtrados);
+		//long filtrados = dados.getRecords().stream().filter(r -> r.getEstadoResidencia().equalsIgnoreCase("Paraí­ba")).count();
+		TreeSet<String> bairros = new TreeSet<String>();
+		dados.getRecords().stream()
+			.filter(r -> r.getEstadoResidencia().equals("Paraí­ba"))
+			.filter(r -> r.getMunicipio().equals("Campina Grande"))
+			.forEach(r -> bairros.add(r.getBairro()));
+		bairros.forEach(c -> System.out.println(c));
+		//System.out.println("Registros filtrados: " + filtrados);
 	}
 }
