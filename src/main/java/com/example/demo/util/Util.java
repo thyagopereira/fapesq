@@ -759,7 +759,7 @@ public class Util {
 		for (String b : bairros) {
 			soma += dados.getRecords().stream().filter(r -> r.getBairro().equals(b)).count();
 		}
-		System.out.println("Soma das ocorrencias: " + soma);
+		//System.out.println("Soma das ocorrencias: " + soma);
 		//System.out.println("Registros nao classificados de bairro: " + dados.getRecords().stream().filter(r -> bairros.contains(r.getBairro())).count());
 	}
 }
