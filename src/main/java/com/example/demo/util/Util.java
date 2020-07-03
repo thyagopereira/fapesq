@@ -640,7 +640,7 @@ public class Util {
 		//pela data do arquivo mais recente (ou pelo nome) creio qu eseja possivel saber 
 		//qual arquivo seria o mais recente.
 		File folder = new File(FOLDER_DADOS_NAME);
-		return new File(folder,"Base 16_06 UFCG.xlsx");
+		return new File(folder,"Base 03_07 7h UFCG.xlsx");
 	}
 	public static TreeSet<String> loadBairros() throws IOException{
 		TreeSet<String> bairros = new TreeSet<String>();
@@ -717,11 +717,11 @@ public class Util {
 	}
 	public static void main(String[] args) throws EncryptedDocumentException, IOException {
 		File folder = new File(FOLDER_DADOS_NAME);
-		File file = new File(folder,"Base 16_06 UFCG.xlsx");
+		File file = getLastDataInfo(); //new File(folder,"Base 16_06 UFCG.xlsx");
 		//System.out.println("Sim".equalsIgnoreCase("sim"));
 		//System.out.println(cleanString("NÃ£o").equalsIgnoreCase("não"));
 		DataInfo dados = loadDataFromExcel(file);
-		//dados.getLoadedColumns().forEach(d -> System.out.println(d.getName()));
+		dados.getLoadedColumns().forEach(d -> System.out.println(d.getName()));
 		//long filtrados = dados.getRecords().stream().filter(r -> r.getEstadoResidencia().equalsIgnoreCase("Paraí­ba")).count();
 		TreeSet<String> bairros = new TreeSet<String>();
 		TreeSet<String> loadedBairros = loadBairros();
