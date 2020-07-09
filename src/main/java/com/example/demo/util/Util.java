@@ -7,11 +7,16 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.ss.usermodel.Cell;
@@ -560,8 +565,9 @@ public class Util {
 					dataInicioSintomas = getCellContentAsData(currentCell);
 				}
 				record.setDataInicioSintomas(dataInicioSintomas);
-
-				records.add(record);
+				if(record.getDataNotificacao() != null) {
+					records.add(record);
+				}
 			}
 			dataInfo.setRecords(records);
 			dataInfo.setNumberOfRecords(records.size());
@@ -709,9 +715,85 @@ public class Util {
 		}
 		return costs[s2.length()];
 	}
-	
-	private String getNomeBairroPorSimilaridade(String nome) {
-		String result = nome;
+	public static List<DataQuantidade> listRecordToListSingleRecord(List<Record> list) {
+		List<DataQuantidade> retorno = new LinkedList<DataQuantidade>();
+		
+		Comparator<GregorianCalendar> comparador = 
+				(d1,d2) -> {
+					
+					if (d1.get(Calendar.YEAR) == d2.get(Calendar.YEAR)) {
+						if(d1.get(Calendar.MONTH) == d2.get(Calendar.MONTH)) {
+							return d1.get(Calendar.DAY_OF_MONTH) - d2.get(Calendar.DAY_OF_MONTH);
+						}else {
+							return d1.get(Calendar.MONTH) - d2.get(Calendar.MONTH);
+						}
+					} else {
+						return d1.get(Calendar.YEAR) - d2.get(Calendar.YEAR); 
+					}
+				};
+		TreeMap<String,Long> ret = new TreeMap<String,Long>( 
+				list.stream()
+				.sorted( (r1,r2) -> comparador.compare(r1.getDataNotificacao(), r2.getDataNotificacao()))
+				.collect(Collectors.groupingBy(Record::getDataNotificacaoAsString,Collectors.counting())));
+		
+		ret.forEach( (d,num) -> retorno.add(new DataQuantidade(d,num.intValue())));
+		Comparator<DataQuantidade> comparadorDtQtde = 
+				(d1,d2) -> {
+					
+					if (d1.getData().get(Calendar.YEAR) == d2.getData().get(Calendar.YEAR)) {
+						if(d1.getData().get(Calendar.MONTH) == d2.getData().get(Calendar.MONTH)) {
+							return d1.getData().get(Calendar.DAY_OF_MONTH) - d2.getData().get(Calendar.DAY_OF_MONTH);
+						}else {
+							return d1.getData().get(Calendar.MONTH) - d2.getData().get(Calendar.MONTH);
+						}
+					} else {
+						return d1.getData().get(Calendar.YEAR) - d2.getData().get(Calendar.YEAR); 
+					}
+				};
+				
+		retorno.sort(comparadorDtQtde);
+		return retorno;
+	}
+	public static TreeMap<String,List<DataQuantidade>> filterRecordsCG(LinkedList<Record> records) throws IOException{
+		TreeMap<String,List<DataQuantidade>> result = new TreeMap<String,List<DataQuantidade>>();
+		TreeSet<String> bairros = loadBairros();
+		
+		Comparator<GregorianCalendar> comparador = 
+				(d1,d2) -> {
+					if (d1.get(Calendar.YEAR) == d2.get(Calendar.YEAR)) {
+						if(d1.get(Calendar.MONTH) == d2.get(Calendar.MONTH)) {
+							return d1.get(Calendar.DAY_OF_MONTH) - d2.get(Calendar.DAY_OF_MONTH);
+						}else {
+							return d1.get(Calendar.MONTH) - d2.get(Calendar.MONTH);
+						}
+					} else {
+						return d1.get(Calendar.YEAR) - d2.get(Calendar.YEAR); 
+					}
+				};
+		//campos a serem retornados na lista
+		////Data, Bairro, Qtde casos no bairro, Qtde óbitos (nao existe esse ultimo campo)
+		TreeMap<String,List<Record>> registrosFiltrados = new TreeMap<String,List<Record>> (
+				records.stream()
+					.filter(r -> r.isResultadoTeste())
+					.filter(r -> r.getEstadoResidencia().equals("Paraí­ba"))
+					.filter(r -> r.getMunicipio().equals("Campina Grande"))
+					.filter(r -> bairros.contains(r.getBairro()))
+					.collect(Collectors.groupingBy(Record::getBairro)));
+		
+		
+		registrosFiltrados.forEach((k,v) -> {
+			List<DataQuantidade> dataQuantidade = listRecordToListSingleRecord(v);
+			result.put(k, dataQuantidade);
+		});
+		/*
+		 * System.out.println("TOTAL DE CASOS: " +
+		 * registrosFiltrados.values().stream().map(List::size).reduce(0,Integer::sum));
+		 * for (Map.Entry<String, List<DataQuantidade>> entry : result.entrySet()) {
+		 * System.out.println("Bairro : " + entry.getKey() + " Casos : " +
+		 * entry.getValue().stream().map(DataQuantidade::getQuantidade).reduce(0,Integer
+		 * ::sum)); }
+		 */
+		//registrosFiltrados.forEach((n,c) -> System.out.println("Bairro: " + n + "( " + c + " ocorrencias)"));
 		
 		return result;
 	}
@@ -731,7 +813,18 @@ public class Util {
 			.forEach(r -> bairros.add(r.getBairro()));
 		System.out.println("Registros de CG: " + dados.getRecords().stream()
 			.filter(r -> r.getEstadoResidencia().equals("Paraí­ba"))
-			.filter(r -> r.getMunicipio().equals("Campina Grande")).count());
+			.filter(r -> r.getMunicipio().equals("Campina Grande"))
+			.filter(r -> bairros.contains(r.getBairro())).count());
+		System.out.println("Registros de CG confirmados: " + dados.getRecords().stream()
+				.filter(r -> r.getEstadoResidencia().equals("Paraí­ba"))
+				.filter(r -> r.getMunicipio().equals("Campina Grande"))
+				.filter(r -> r.isResultadoTeste())
+				.filter(r -> bairros.contains(r.getBairro())).count());
+		System.out.println("Registros com data de notificacao nula: " + 
+				dados.getRecords().stream()
+				.filter(r -> r.getEstadoResidencia().equals("Paraí­ba"))
+				.filter(r -> r.getMunicipio().equals("Campina Grande"))
+				.filter(r -> r.getDataNotificacao() == null).count());
 		TreeSet<String> bairrosDaBase = new TreeSet<String>();
 		TreeSet<String> bairrosEncontrados = new TreeSet<String>();
 		bairros.forEach(c -> {
@@ -744,22 +837,25 @@ public class Util {
 				}
 			});
 		});
+		
+		
 		System.out.println(loadedBairros.size() + " bairros carregados do arquivo");
 		System.out.println(bairrosEncontrados.size() + " bairros encontrados na similaridade");
 		loadedBairros.removeAll(bairrosEncontrados);
 		System.out.println(loadedBairros.size() + " bairros da lista que sobraram na similaridade");
 		//System.out.println("Registros filtrados: " + filtrados);
-		loadedBairros.forEach(b -> System.out.println(b));
+		//loadedBairros.forEach(b -> System.out.println(b));
 		
 		System.out.println("Bairros lidos da base: " + bairros.size());
 		System.out.println("Bairros lidos da base e mapeados: " + bairrosDaBase.size());
 		bairros.removeAll(bairrosDaBase);
-		bairros.stream().forEach(b -> System.out.println(b + " (" + dados.getRecords().stream().filter(r -> r.getBairro().equals(b)).count() + " ocorrencias)"));
+		//bairros.stream().forEach(b -> System.out.println(b + " (" + dados.getRecords().stream().filter(r -> r.getBairro().equals(b)).count() + " ocorrencias)"));
 		int soma = 0;
 		for (String b : bairros) {
 			soma += dados.getRecords().stream().filter(r -> r.getBairro().equals(b)).count();
 		}
 		//System.out.println("Soma das ocorrencias: " + soma);
 		//System.out.println("Registros nao classificados de bairro: " + dados.getRecords().stream().filter(r -> bairros.contains(r.getBairro())).count());
+		filterRecordsCG(dados.getRecords());
 	}
 }

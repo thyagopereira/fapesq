@@ -1,5 +1,7 @@
 package com.example.demo.util;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 enum Sexo{ 
@@ -280,6 +282,9 @@ public class Record {
 	public void setDataInicioSintomas(GregorianCalendar dataInicioSintomas) {
 		this.dataInicioSintomas = dataInicioSintomas;
 	}
-	
+	public String getDataNotificacaoAsString() {
+		SimpleDateFormat df = new SimpleDateFormat("dd/MM/YYYY");
+		return df.format(this.dataNotificacao.getTime());
+	}
 	
 }
