@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Comparator;
@@ -18,6 +21,9 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -30,6 +36,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 public class Util {
 	public static final String FOLDER_DADOS_NAME = "dados";
 	public static final String FILE_BAIRROS_NAME = "bairros-cg.txt";
+	public static final String FILE_CSV_FILTRADO = "cases_per_date_filtered.txt";
 	public static final Pattern PATTERN_DATA = Pattern.compile("[0-9]{2}/[0-9]{2}/[0-9]{2}");
 	public static final String TOKEN_NUMERO_NOTIFICACAO = "Número da Notificação";
 	public static final String TOKEN_EH_PROFISSIONAL_SAUDE = "É profissional de saúde?";
@@ -754,6 +761,56 @@ public class Util {
 		retorno.sort(comparadorDtQtde);
 		return retorno;
 	}
+	
+	public static LinkedList<DataQuantidade> loadStateDataFiltered() {
+		LinkedList<DataQuantidade> historico = new LinkedList<DataQuantidade>();
+		File folder = new File(FOLDER_DADOS_NAME);
+		File casesPerDateFilteded = new File(folder,FILE_CSV_FILTRADO);
+		Comparator<DataQuantidade> comparadorDtQtde = 
+				(d1,d2) -> {
+					
+					if (d1.getData().get(Calendar.YEAR) == d2.getData().get(Calendar.YEAR)) {
+						if(d1.getData().get(Calendar.MONTH) == d2.getData().get(Calendar.MONTH)) {
+							return d1.getData().get(Calendar.DAY_OF_MONTH) - d2.getData().get(Calendar.DAY_OF_MONTH);
+						}else {
+							return d1.getData().get(Calendar.MONTH) - d2.getData().get(Calendar.MONTH);
+						}
+					} else {
+						return d1.getData().get(Calendar.YEAR) - d2.getData().get(Calendar.YEAR); 
+					}
+				};
+				
+		try {
+			BufferedReader reader = Files.newBufferedReader(casesPerDateFilteded.toPath());
+			String line = reader.readLine();
+			while ((line = reader.readLine()) != null) {
+				String[] campos = line.split(",");
+				String data = campos[0];
+				String[] dataCampos = data.split("-");
+				int ano = Integer.parseInt(dataCampos[0]);
+				int mes = Integer.parseInt(dataCampos[1]) - 1;
+				int dia = Integer.parseInt(dataCampos[2]);
+				GregorianCalendar dt = new GregorianCalendar();
+				dt.set(Calendar.YEAR, ano);
+				dt.set(Calendar.MONTH, mes);
+				dt.set(Calendar.DAY_OF_MONTH, dia);
+				int qtde = Integer.parseInt(campos[1]);
+				
+				DataQuantidade dtqtde = new DataQuantidade();
+				dtqtde.setData(dt);
+				dtqtde.setQuantidade(qtde);
+				historico.add(dtqtde);
+			}
+			historico.sort(comparadorDtQtde);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		
+		return historico;
+	
+	}
 	public static TreeMap<String,List<DataQuantidade>> filterRecordsCG(LinkedList<Record> records) throws IOException{
 		TreeMap<String,List<DataQuantidade>> result = new TreeMap<String,List<DataQuantidade>>();
 		TreeSet<String> bairros = loadBairros();
@@ -802,6 +859,7 @@ public class Util {
 		File file = getLastDataInfo(); //new File(folder,"Base 16_06 UFCG.xlsx");
 		//System.out.println("Sim".equalsIgnoreCase("sim"));
 		//System.out.println(cleanString("NÃ£o").equalsIgnoreCase("não"));
+		LinkedList<DataQuantidade>	historicoDiario = loadStateDataFiltered();
 		DataInfo dados = loadDataFromExcel(file);
 		dados.getLoadedColumns().forEach(d -> System.out.println(d.getName()));
 		//long filtrados = dados.getRecords().stream().filter(r -> r.getEstadoResidencia().equalsIgnoreCase("Paraí­ba")).count();

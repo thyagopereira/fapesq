@@ -54,4 +54,13 @@ public class RegistroController {
 		
 		return new ResponseEntity<TreeMap<String,List<DataQuantidade>>>(records, HttpStatus.OK);
 	}
+	
+	@CrossOrigin
+	@GetMapping("/pbdatafiltered")
+	public ResponseEntity<List<DataQuantidade>> getStateDataFiltered() {		
+		
+		List<DataQuantidade> dataFiltered = Util.loadStateDataFiltered();
+		
+		return new ResponseEntity<List<DataQuantidade>>(dataFiltered, HttpStatus.OK);
+	}
 }
