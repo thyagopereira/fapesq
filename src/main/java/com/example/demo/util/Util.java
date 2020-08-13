@@ -64,7 +64,7 @@ public class Util {
 	public static final String TOKEN_DESCRICAO_SINTOMA = "Descrição do Sintoma";
 	public static final String TOKEN_DATA_ENCERRAMENTO = "Data de encerramento";
 	public static final String TOKEN_DATA_NASCIMENTO = "Data de Nascimento";
-	public static final String TOKEN_MUNICIPIO = "Municí­pio de Residência";
+	public static final String TOKEN_MUNICIPIO = "Município de Residência";
 	public static final String TOKEN_DATA_INICIO_SINTOMAS = "Data do iní­cio dos sintomas";
 	
 	public static TreeSet<String> BAIRROS_CADASTRADOS = new TreeSet<String>();
@@ -147,8 +147,11 @@ public class Util {
 			if(cell.getCellType() != null) {
 				if(cell.getCellType().equals(CellType.NUMERIC)) {				
 					Date data = DateUtil.getJavaDate(cell.getNumericCellValue());
-					result = new GregorianCalendar();
-					result.setTime(data);
+					
+					if(data != null) {
+						result = new GregorianCalendar();
+						result.setTime(data);
+					}
 				}
 			}
 		}
@@ -653,7 +656,7 @@ public class Util {
 		//pela data do arquivo mais recente (ou pelo nome) creio qu eseja possivel saber 
 		//qual arquivo seria o mais recente.
 		File folder = new File(FOLDER_DADOS_NAME);
-		return new File(folder,"Base_12_07 16h UFCG.xlsx");
+		return new File(folder,"Base 13_08 UFCG.xlsx");
 	}
 	public static TreeSet<String> loadBairros() throws IOException{
 		TreeSet<String> bairros = new TreeSet<String>();
