@@ -43,33 +43,32 @@ public class RegistroController {
 
 	@CrossOrigin
 	@GetMapping("/registrosconfirmados")
-	public ResponseEntity<LinkedList<Record>> getRegistrosConfirmados() {
+	public ResponseEntity<Integer> getRegistrosConfirmados() {
 		LinkedList<Record> records = dataInfo.getRecords();
-		LinkedList<Record> confirmedRecords = new LinkedList<>();
+		int count = 0;
 
 		for (Record record: records) {
 			if (record.isResultadoTeste()) {
-				confirmedRecords.add(record);
+				count += 1;
 			}		
 		}
 
-		return new ResponseEntity<LinkedList<Record>>(confirmedRecords, HttpStatus.OK);
+		return new ResponseEntity<Integer>(count, HttpStatus.OK);
 	}
 
 	@CrossOrigin
 	@GetMapping("/registrosrecuperados")
-	public ResponseEntity<LinkedList<Record>> getRegistrosRecuperados() {
+	public ResponseEntity<Integer> getRegistrosRecuperados() {
 		LinkedList<Record> records = dataInfo.getRecords();
-		LinkedList<Record> recoveredRecords = new LinkedList<>();
+		int count = 0;
 
 		for (Record record: records) {
 			if (record.isResultadoTeste() && record.getDataEncerramento() != null) {
-
-				recoveredRecords.add(record);
+				count += 1;
 			}		
 		}
 
-		return new ResponseEntity<LinkedList<Record>>(recoveredRecords, HttpStatus.OK);
+		return new ResponseEntity<Integer>(count, HttpStatus.OK);
 	}
 	
 	@CrossOrigin
