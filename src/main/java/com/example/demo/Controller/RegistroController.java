@@ -17,6 +17,7 @@ import com.example.demo.util.DataInfo;
 import com.example.demo.util.DataQuantidade;
 import com.example.demo.util.SimpleRecord;
 import com.example.demo.util.Util;
+import com.example.demo.util.Record;
 
 @RestController
 public class RegistroController {
@@ -38,6 +39,36 @@ public class RegistroController {
 	@GetMapping("/registros")
 	public ResponseEntity<DataInfo> getRegistros() {
 		return new ResponseEntity<DataInfo>(dataInfo, HttpStatus.OK);
+	}
+
+	@CrossOrigin
+	@GetMapping("/registrosconfirmados")
+	public ResponseEntity<Integer> getRegistrosConfirmados() {
+		LinkedList<Record> records = dataInfo.getRecords();
+		int count = 0;
+
+		for (Record record: records) {
+			if (record.isResultadoTeste()) {
+				count += 1;
+			}		
+		}
+
+		return new ResponseEntity<Integer>(count, HttpStatus.OK);
+	}
+
+	@CrossOrigin
+	@GetMapping("/registrosrecuperados")
+	public ResponseEntity<Integer> getRegistrosRecuperados() {
+		LinkedList<Record> records = dataInfo.getRecords();
+		int count = 0;
+
+		for (Record record: records) {
+			if (record.isResultadoTeste() && record.getDataEncerramento() != null) {
+				count += 1;
+			}		
+		}
+
+		return new ResponseEntity<Integer>(count, HttpStatus.OK);
 	}
 	
 	@CrossOrigin
